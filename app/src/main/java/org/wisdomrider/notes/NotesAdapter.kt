@@ -1,6 +1,7 @@
 package org.wisdomrider.notes
 
 import android.app.Dialog
+import android.text.InputType
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
@@ -8,6 +9,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 /*
    Created By WisdomRider(Avishek Adhikari)
@@ -17,7 +19,8 @@ import java.util.*
      Credit Me SomeWhere In Your Project :)
      Thanks !!
 */
-class NotesAdapter(internal var home: Home) : RecyclerView.Adapter<NotesAdapter.WisdomHolder>() {
+class NotesAdapter(internal var home: Home, var notes: ArrayList<LoginPage.NoteData>) :
+    RecyclerView.Adapter<NotesAdapter.WisdomHolder>() {
 
     override fun onCreateViewHolder(viewGroup: ViewGroup, i: Int): WisdomHolder {
         val v = View.inflate(viewGroup.context, R.layout.note, null)
@@ -26,36 +29,58 @@ class NotesAdapter(internal var home: Home) : RecyclerView.Adapter<NotesAdapter.
 
 
     override fun onBindViewHolder(wisdomHolder: WisdomHolder, i: Int) {
-        val note = home.notes[i]
+        val note = notes[i]
         wisdomHolder.title.text = note.title
         wisdomHolder.content.text = note.desc.replace("**", "'")
+        if (note.title.toLowerCase().contains("password") || note.title.toLowerCase().contains("secret")
+        ) wisdomHolder.content.setInputType(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD)
+        else wisdomHolder.content.setInputType(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE)
         wisdomHolder.title.tag = note._id
         val inputFormat = SimpleDateFormat("yyyy-mm-dd hh:mm:ss", Locale.US)
         inputFormat.setTimeZone(TimeZone.getTimeZone("Etc/UTC"))
         val outputFormat = SimpleDateFormat("dd MMMM yyyy")
-        val date = inputFormat.parse(note.createdAt.replace("T", " ").replace("Z", "").split(".")[0])
-        val outputText = "- " + outputFormat.format(date)
-        wisdomHolder.date.text = outputText
+        try {
+            val date = inputFormat.parse(note.createdAt.replace("T", " ").replace("Z", "").split(".")[0])
+            val outputText = "- " + outputFormat.format(date)
+            wisdomHolder.date.text = outputText
+        } catch (e: Exception) {
+            val d = Date()
+            d.time = note.time!!
+            wisdomHolder.date.text = "- ${SimpleDateFormat("dd MMMM yyyy").format(d)}"
+        }
 
-        val listerner = View.OnFocusChangeListener { v, hasFocus ->
-            if (!hasFocus || !home.showDialog) {
-                home.showDialog = true
-                return@OnFocusChangeListener
-            }
+
+        val click = View.OnClickListener {
+
             val dialog = Dialog(home)
             dialog.setContentView(R.layout.note)
-            dialog.findViewById<EditText>(R.id.title).setText(note.title)
-            dialog.findViewById<EditText>(R.id.title).tag = note._id
-            dialog.findViewById<TextView>(R.id.date).setText(outputText)
-            dialog.findViewById<EditText>(R.id.desc).setText(note.desc.replace("**", "'"))
-            dialog.show()
+            var title = dialog.findViewById<EditText>(R.id.title)
+            var desc = dialog.findViewById<EditText>(R.id.desc)
+            title.isFocusable = true
+            title.isFocusableInTouchMode = true
+            desc.isFocusable = true
+            desc.isFocusableInTouchMode = true
+            title.setText(note.title)
+            title.tag = note._id
+            desc.setText(note.desc.replace("**", "'"))
+            dialog.findViewById<TextView>(R.id.date).setText(wisdomHolder.date.text.toString())
+            if (home.showDialog) dialog.show()
+            else home.showDialog = true
+            dialog.setOnDismissListener {
+                if (desc.text.trim().isEmpty() || title.text.trim().isEmpty())
+                    home.showAlert("Title/Description cannot be empty !")
+                else if (!title.text.toString().equals(note.title) || !desc.text.toString().equals(note.desc)) {
+                    home.onCancel(title.text.toString(), desc.text.toString(), title.tag.toString(), wisdomHolder)
+                }
+            }
         }
-        wisdomHolder.content.onFocusChangeListener = listerner
-        wisdomHolder.title.onFocusChangeListener = listerner
+
+        wisdomHolder.title.setOnClickListener(click)
+        wisdomHolder.content.setOnClickListener(click)
     }
 
     override fun getItemCount(): Int {
-        return home.notes.size
+        return notes.size
     }
 
     inner class WisdomHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -65,4 +90,6 @@ class NotesAdapter(internal var home: Home) : RecyclerView.Adapter<NotesAdapter.
 
 
     }
+
+
 }

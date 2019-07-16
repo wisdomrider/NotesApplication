@@ -15,8 +15,12 @@ class LoginPage : BaseActivity() {
     class LoginResponse(var data: Data)
     class Data(var key: String)
     class NotesResponse(var data: ArrayList<NoteData>)
-    class NoteData(
-        var title: String = "", var desc: String = "", var createdAt: String = "",
+    class NoteData
+        (
+        var time: Long? = null,
+        var title: String = "",
+        var desc: String = "",
+        var createdAt: String = "",
         @SqliteAnnotations.Primary
         var _id: String = ""
     )

@@ -16,7 +16,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 import androidx.core.app.NotificationCompat;
 import com.wisdomrider.Utils.Preferences;
 import okhttp3.Interceptor;
@@ -29,7 +28,6 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 public class ChatHead extends Service {
@@ -231,9 +229,9 @@ public class ChatHead extends Service {
     String title, desc;
 
     private void sendNotificationToServer() {
-        api.addNote(new LoginPage.Add(title, desc)).enqueue(new Callback<LoginPage.LoginResponse>() {
+        api.addNote(new LoginPage.Add(title, desc)).enqueue(new Callback<Home.Response>() {
             @Override
-            public void onResponse(Call<LoginPage.LoginResponse> call, retrofit2.Response<LoginPage.LoginResponse> response) {
+            public void onResponse(Call<Home.Response> call, retrofit2.Response<Home.Response> response) {
                 mBuilder.setContentTitle("Note uploaded succesfully !")
                         .setContentText("Your clipboard is copied  to server !")
                         .setProgress(0, 0, false);
@@ -241,7 +239,7 @@ public class ChatHead extends Service {
             }
 
             @Override
-            public void onFailure(Call<LoginPage.LoginResponse> call, Throwable t) {
+            public void onFailure(Call<Home.Response> call, Throwable t) {
                 mBuilder.setContentText("Something went wrong while adding node !")
                         .setProgress(0, 0, false);
                 mNotifyManager.notify(id, mBuilder.build());

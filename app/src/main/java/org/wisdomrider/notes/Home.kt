@@ -6,13 +6,22 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.Menu
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.widget.EditText
+import android.widget.SearchView
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_home.*
 import java.util.*
+import kotlin.collections.ArrayList
 
-class Home : BaseActivity() {
+
+class Home : BaseActivity(), SearchView.OnQueryTextListener {
+
+    class Response(var data: Dat)
+    class Dat(var id: String)
 
     var showDialog = false
     lateinit var notes: ArrayList<LoginPage.NoteData>
@@ -22,7 +31,7 @@ class Home : BaseActivity() {
         setContentView(R.layout.activity_home)
         notes = helper.getAll(LoginPage.NoteData())
         notes.reverse()
-        adapter = NotesAdapter(this)
+        adapter = NotesAdapter(this, notes)
         recycle.adapter = adapter
         recycle.layoutManager = LinearLayoutManager(this)
 
@@ -33,10 +42,43 @@ class Home : BaseActivity() {
             val date1 = date[0] + " " + date[1] + " " + date[2]
             dialog.findViewById<TextView>(R.id.date).text = "- ${date1}"
             dialog.show()
+            val title = dialog.findViewById<EditText>(R.id.title)
+            val desc = dialog.findViewById<EditText>(R.id.desc)
+            title.isFocusable = true
+            title.isFocusableInTouchMode = true
+            desc.isFocusable = true
+            desc.isFocusableInTouchMode = true
+            dialog.setOnCancelListener {
+                if (desc.text.trim().isEmpty() || title.text.trim().isEmpty()) {
+                    showAlert("Title/Description cannot be empty !")
+                } else {
+                    sync.visibility = VISIBLE
+                    api.addNote(LoginPage.Add(title.text.toString(), desc.text.toString())).get("", object : Do {
+                        override fun <T> Do(body: T?) {
+                            sync.visibility = GONE
+                            notes.reverse()
+                            notes.add(
+                                LoginPage.NoteData(
+                                    title = title.text.toString(),
+                                    desc = desc.text.toString(),
+                                    time = System.currentTimeMillis()
+                                    , _id = (body as Response).data.id
+                                )
+                            )
+                            notes.reverse()
+                            adapter.notifyDataSetChanged()
+                        }
+
+                    })
+                }
+
+
+            }
 
         }
         checkForPermission()
 
+        title = "Notes"
         if (preferences.getString("add_text", "")!!.isNotEmpty()) {
             val dialog = Dialog(this)
             dialog.setContentView(R.layout.note)
@@ -64,11 +106,70 @@ class Home : BaseActivity() {
 
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu, menu)
+        val searchItem = menu.findItem(R.id.app_bar_search)
+        val searchView = searchItem.getActionView() as SearchView
+        searchView.setOnQueryTextListener(this)
+        return true
+    }
+
+    override fun onQueryTextChange(query: String): Boolean {
+        if (query.trim().isNotEmpty()) {
+            val note =
+                notes.filter {
+                    it.title.toLowerCase().contains(query.toLowerCase()) || it.desc.toLowerCase().contains(
+                        query.toLowerCase()
+                    )
+                }
+            val fNotes = ArrayList<LoginPage.NoteData>()
+            fNotes.addAll(note)
+            adapter.notifyDataSetChanged()
+        } else {
+            adapter.notifyDataSetChanged()
+        }
+        // Here is where we are going to implement the filter logic
+        return false
+    }
+
+    override fun onQueryTextSubmit(query: String): Boolean {
+        return false
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 1) {
             checkForPermission()
         }
+    }
+
+    fun onCancel(title: String, desc: String, tag: String, wisdomHolder: NotesAdapter.WisdomHolder) {
+        sync.visibility = VISIBLE
+        if (title.equals("DEL") || title.equals("DELETE")) {
+            api.Delete(tag).get("", object : Do {
+                override fun <T> Do(body: T?) {
+                    sync.visibility = GONE
+                    val note = notes.filter { it._id.equals(tag) }[0]
+                    notes.remove(note)
+                    adapter.notifyDataSetChanged()
+                }
+
+            })
+        } else {
+            api.editNote(LoginPage.Add(title, desc), tag)
+                .get("", object : Do {
+                    override fun <T> Do(body: T?) {
+                        sync.visibility = GONE
+                        val note = notes.filter { it._id.equals(tag) }[0]
+                        note.title = title
+                        note.desc = desc
+                        adapter.notifyDataSetChanged()
+                    }
+                })
+
+        }
+
+
     }
 
 }

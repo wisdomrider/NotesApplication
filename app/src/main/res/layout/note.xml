@@ -16,11 +16,15 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
             <EditText
+                    android:focusable="false"
+                    android:focusableInTouchMode="false"
                     android:id="@+id/title"
                     android:layout_margin="5dp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"/>
             <EditText
+                    android:focusable="false"
+                    android:focusableInTouchMode="false"
                     android:imeOptions="actionDone"
                     android:clickable="false"
                     android:inputType="textMultiLine"

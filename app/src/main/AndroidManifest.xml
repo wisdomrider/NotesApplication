@@ -6,8 +6,6 @@
     <uses-permission android:name="android.permission.WRITE_CLIPS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-
-
     <application
             android:allowBackup="true"
             android:icon="@mipmap/ic_launcher"
@@ -15,7 +13,9 @@
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
             android:theme="@style/AppTheme">
-        <activity android:name=".Home">
+        <activity
+                android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                android:name=".Home">
         </activity>
         <service android:name=".ChatHead"/>
         <activity android:name=".LoginPage">
