@@ -81,6 +81,7 @@ class Home : BaseActivity(), SearchView.OnQueryTextListener {
             }
 
         }
+
         checkForPermission()
         title = "Notes"
         if (preferences.getString("add_text", "")!!.isNotEmpty()) {
@@ -106,6 +107,10 @@ class Home : BaseActivity(), SearchView.OnQueryTextListener {
         } else {
             startService(Intent(this, ChatHead::class.java))
         }
+
+    }
+
+    override fun onBackPressed() {
 
     }
 

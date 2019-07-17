@@ -27,6 +27,10 @@ class LoginPage : BaseActivity() {
 
     class Add(var title: String, var desc: String);
 
+    override fun onBackPressed() {
+
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login_page)
