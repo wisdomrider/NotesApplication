@@ -63,6 +63,9 @@ class LoginPage : BaseActivity() {
 
             }
         }
+        register.setOnClickListener {
+            startActivity(Intent(this@LoginPage, Register::class.java))
+        }
     }
 
     private fun checkForPermission() {

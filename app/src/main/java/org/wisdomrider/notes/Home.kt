@@ -53,7 +53,6 @@ class Home : BaseActivity(), SearchView.OnQueryTextListener {
             desc.isFocusableInTouchMode = true
             dialog.setOnCancelListener {
                 if (desc.text.trim().isEmpty() || title.text.trim().isEmpty()) {
-                    showAlert("Title/Description cannot be empty !")
                 } else {
                     sync.visibility = VISIBLE
                     api.addNote(LoginPage.Add(title.text.toString(), desc.text.toString())).get("", object : Do {

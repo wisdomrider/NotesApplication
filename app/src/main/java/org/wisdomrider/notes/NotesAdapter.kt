@@ -51,7 +51,6 @@ class NotesAdapter(internal var home: Home, var notes: ArrayList<LoginPage.NoteD
 
 
         val click = View.OnClickListener {
-
             val dialog = Dialog(home)
             dialog.setContentView(R.layout.note)
             var title = dialog.findViewById<EditText>(R.id.title)
@@ -64,12 +63,11 @@ class NotesAdapter(internal var home: Home, var notes: ArrayList<LoginPage.NoteD
             title.tag = note._id
             desc.setText(note.desc.replace("**", "'"))
             dialog.findViewById<TextView>(R.id.date).setText(wisdomHolder.date.text.toString())
-            if (home.showDialog) dialog.show()
-            else home.showDialog = true
+            dialog.show()
             dialog.setOnDismissListener {
-                if (desc.text.trim().isEmpty() || title.text.trim().isEmpty())
-                    home.showAlert("Title/Description cannot be empty !")
-                else if (!title.text.toString().equals(note.title) || !desc.text.toString().equals(note.desc)) {
+                if (desc.text.trim().isEmpty() || title.text.trim().isEmpty()) {
+
+                } else if (!title.text.toString().equals(note.title) || !desc.text.toString().equals(note.desc)) {
                     home.onCancel(title.text.toString(), desc.text.toString(), title.tag.toString(), wisdomHolder)
                 }
             }

@@ -11,6 +11,9 @@ public interface Api {
     @POST("login")
     Call<LoginPage.LoginResponse> Login(@Body LoginPage.Login login);
 
+    @POST("register")
+    Call<Register.RResponse> Register(@Body Register.Register login);
+
     @GET("notes")
     Call<LoginPage.NotesResponse> Notes();
 
