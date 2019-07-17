@@ -7,8 +7,12 @@
         android:layout_height="match_parent"
         tools:context=".LoginPage">
 
-    <include layout="@layout/logo_pic"/>
-
+    <LinearLayout
+            android:layout_marginTop="30dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        <include layout="@layout/logo_pic"/>
+    </LinearLayout>
     <TextView
             android:layout_marginTop="20dp"
             android:textStyle="bold"

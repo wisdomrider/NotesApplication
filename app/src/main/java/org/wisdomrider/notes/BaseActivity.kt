@@ -17,7 +17,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 open class BaseActivity : com.wisdomrider.Activities.BaseActivity() {
-     val BASE_URL = "https://notes.wisdomriderr.shop/api/mobile/"
+    val BASE_URL = "https://notes.wisdomriderr.shop/api/mobile/"
     lateinit var retrofit: Retrofit
     lateinit var preferences: Preferences
     val gson = Gson()
@@ -85,13 +85,18 @@ open class BaseActivity : com.wisdomrider.Activities.BaseActivity() {
         messageFor406: String = "Authentication Error",
         messageFor400: String = "Unable to connect to server please try again !",
         onBack: Boolean = false,
-        on406: Do? = null
+        on406: Do? = null,
+        onNetworkError: Do? = null
     ): Any {
         if (!what.isEmpty())
             showProgessBar(what)
         this.enqueue(object : Callback<T> {
             override fun onFailure(call: Call<T>, t: Throwable) {
                 closeProgressBar()
+                if (onNetworkError != null) {
+                    onNetworkError.Do(null)
+                    return
+                }
                 showAlert("Unable to connect to the server.")
                 if (onBack) {
                     wisdom.toast("Please check your internet connection.")

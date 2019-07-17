@@ -15,7 +15,6 @@ import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_home.*
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 class Home : BaseActivity(), SearchView.OnQueryTextListener {
@@ -24,13 +23,17 @@ class Home : BaseActivity(), SearchView.OnQueryTextListener {
     class Dat(var id: String)
 
     var showDialog = false
-    lateinit var notes: ArrayList<LoginPage.NoteData>
+    var notes = ArrayList<LoginPage.NoteData>()
+    lateinit var mainnotes: ArrayList<LoginPage.NoteData>
     lateinit var adapter: NotesAdapter
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
-        notes = helper.getAll(LoginPage.NoteData())
-        notes.reverse()
+        mainnotes = helper.getAll(LoginPage.NoteData())
+        mainnotes.reverse()
+
+        notes.clear()
+        notes.addAll(mainnotes)
         adapter = NotesAdapter(this, notes)
         recycle.adapter = adapter
         recycle.layoutManager = LinearLayoutManager(this)
@@ -56,8 +59,8 @@ class Home : BaseActivity(), SearchView.OnQueryTextListener {
                     api.addNote(LoginPage.Add(title.text.toString(), desc.text.toString())).get("", object : Do {
                         override fun <T> Do(body: T?) {
                             sync.visibility = GONE
-                            notes.reverse()
-                            notes.add(
+                            mainnotes.reverse()
+                            mainnotes.add(
                                 LoginPage.NoteData(
                                     title = title.text.toString(),
                                     desc = desc.text.toString(),
@@ -65,7 +68,9 @@ class Home : BaseActivity(), SearchView.OnQueryTextListener {
                                     , _id = (body as Response).data.id
                                 )
                             )
-                            notes.reverse()
+                            mainnotes.reverse()
+                            notes.clear()
+                            notes.addAll(mainnotes)
                             adapter.notifyDataSetChanged()
                         }
 
@@ -77,7 +82,6 @@ class Home : BaseActivity(), SearchView.OnQueryTextListener {
 
         }
         checkForPermission()
-
         title = "Notes"
         if (preferences.getString("add_text", "")!!.isNotEmpty()) {
             val dialog = Dialog(this)
@@ -88,7 +92,6 @@ class Home : BaseActivity(), SearchView.OnQueryTextListener {
             dialog.findViewById<TextView>(R.id.date).text = "- ${date1}"
             dialog.show()
             preferences.putString("add_text", "").apply()
-
         }
 
     }
@@ -117,15 +120,17 @@ class Home : BaseActivity(), SearchView.OnQueryTextListener {
     override fun onQueryTextChange(query: String): Boolean {
         if (query.trim().isNotEmpty()) {
             val note =
-                notes.filter {
+                mainnotes.filter {
                     it.title.toLowerCase().contains(query.toLowerCase()) || it.desc.toLowerCase().contains(
                         query.toLowerCase()
                     )
                 }
-            val fNotes = ArrayList<LoginPage.NoteData>()
-            fNotes.addAll(note)
+            notes.clear()
+            notes.addAll(note)
             adapter.notifyDataSetChanged()
         } else {
+            notes.clear()
+            notes.addAll(mainnotes)
             adapter.notifyDataSetChanged()
         }
         // Here is where we are going to implement the filter logic
@@ -149,8 +154,10 @@ class Home : BaseActivity(), SearchView.OnQueryTextListener {
             api.Delete(tag).get("", object : Do {
                 override fun <T> Do(body: T?) {
                     sync.visibility = GONE
-                    val note = notes.filter { it._id.equals(tag) }[0]
-                    notes.remove(note)
+                    val note = mainnotes.filter { it._id.equals(tag) }[0]
+                    mainnotes.remove(note)
+                    notes.clear()
+                    notes.addAll(mainnotes)
                     adapter.notifyDataSetChanged()
                 }
 
@@ -160,9 +167,11 @@ class Home : BaseActivity(), SearchView.OnQueryTextListener {
                 .get("", object : Do {
                     override fun <T> Do(body: T?) {
                         sync.visibility = GONE
-                        val note = notes.filter { it._id.equals(tag) }[0]
+                        val note = mainnotes.filter { it._id.equals(tag) }[0]
                         note.title = title
                         note.desc = desc
+                        notes.clear()
+                        notes.addAll(mainnotes)
                         adapter.notifyDataSetChanged()
                     }
                 })

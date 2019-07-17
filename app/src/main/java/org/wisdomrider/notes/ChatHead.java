@@ -3,10 +3,10 @@ package org.wisdomrider.notes;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
-import android.content.ClipboardManager;
-import android.content.Context;
-import android.content.Intent;
+import android.content.*;
 import android.graphics.PixelFormat;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 import androidx.core.app.NotificationCompat;
 import com.wisdomrider.Utils.Preferences;
 import okhttp3.Interceptor;
@@ -46,7 +47,6 @@ public class ChatHead extends Service {
     public IBinder onBind(Intent intent) {
         return null;
     }
-
 
     public void showFloatingIcon() {
         preferences = new Preferences(this, "Data", 0);
@@ -94,7 +94,7 @@ public class ChatHead extends Service {
         }
         mBuilder.setContentTitle("Adding Note")
                 .setContentText("Note is Uploading to Server !")
-                .setSmallIcon(R.drawable.ic_add);
+                .setSmallIcon(R.drawable.icon);
         mBuilder.setProgress(100, 0, true);
         mNotifyManager.notify(id, mBuilder.build());
 
@@ -221,7 +221,14 @@ public class ChatHead extends Service {
             }
         });
 
-
+        if (!preferences.getString("cache", "").isEmpty()) {
+            String[] data = preferences.getString("cache", "").split("^&&");
+            title = data[0];
+            desc = data[1];
+            showNotification();
+            sendNotificationToServer();
+            preferences.putString("cache", "").apply();
+        }
     }
 
 
@@ -236,13 +243,19 @@ public class ChatHead extends Service {
                         .setContentText("Your clipboard is copied  to server !")
                         .setProgress(0, 0, false);
                 mNotifyManager.notify(id, mBuilder.build());
+                preferences.putString("cache", "").apply();
             }
 
             @Override
             public void onFailure(Call<Home.Response> call, Throwable t) {
-                mBuilder.setContentText("Something went wrong while adding node !")
+                mBuilder.setContentText("Unable to connect to server.Note is cached and will be synced once you are connected to internet !")
                         .setProgress(0, 0, false);
                 mNotifyManager.notify(id, mBuilder.build());
+                preferences.putString("cache", title + ":" + desc).apply();
+                IntentFilter filter = new IntentFilter();
+                filter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
+                registerReceiver(new NetworkChangeReceiver(), filter);
+
             }
         });
 
@@ -263,6 +276,32 @@ public class ChatHead extends Service {
         showFloatingIcon();
     }
 
+    public class NetworkChangeReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            try {
+                if (isOnline(context)) {
+                    showNotification();
+                    sendNotificationToServer();
+                    Toast.makeText(context, "back !", Toast.LENGTH_SHORT).show();
+                    unregisterReceiver(this);
+                }
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private boolean isOnline(Context context) {
+            try {
+                ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo netInfo = cm.getActiveNetworkInfo();
+                return (netInfo != null && netInfo.isConnected());
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+    }
 
 }
 

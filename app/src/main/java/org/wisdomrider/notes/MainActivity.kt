@@ -29,9 +29,13 @@ class MainActivity : BaseActivity() {
         }, on406 = object : Do {
             override fun <T> Do(body: T?) {
                 startActivity(Intent(this@MainActivity, LoginPage::class.java))
-
             }
-
+        }, onNetworkError = object : Do {
+            override fun <T> Do(body: T?) {
+                if (preferences.getString("token", "")!!.isNotEmpty()) {
+                    startActivity(Intent(this@MainActivity, Home::class.java))
+                } else showAlert("Unable to Connect to Server !")
+            }
         })
 
     }
