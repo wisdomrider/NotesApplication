@@ -239,6 +239,13 @@ public class ChatHead extends Service {
         api.addNote(new LoginPage.Add(title, desc)).enqueue(new Callback<Home.Response>() {
             @Override
             public void onResponse(Call<Home.Response> call, retrofit2.Response<Home.Response> response) {
+                if (response.code() == 406) {
+                    mBuilder.setContentTitle("Session Expired !")
+                            .setContentText("Please open the app to save a note !")
+                            .setProgress(0, 0, false);
+                    mNotifyManager.notify(id, mBuilder.build());
+                    return;
+                }
                 mBuilder.setContentTitle("Note uploaded succesfully !")
                         .setContentText("Your clipboard is copied  to server !")
                         .setProgress(0, 0, false);
@@ -251,7 +258,7 @@ public class ChatHead extends Service {
                 mBuilder.setContentText("Unable to connect to server.Note is cached and will be synced once you are connected to internet !")
                         .setProgress(0, 0, false);
                 mNotifyManager.notify(id, mBuilder.build());
-                preferences.putString("cache", title + ":" + desc).apply();
+                preferences.putString("cache", title + "^&&" + desc).apply();
                 IntentFilter filter = new IntentFilter();
                 filter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
                 registerReceiver(new NetworkChangeReceiver(), filter);
