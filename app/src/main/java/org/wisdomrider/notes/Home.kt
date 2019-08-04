@@ -82,7 +82,7 @@ class Home : BaseActivity(), SearchView.OnQueryTextListener {
         }
 
         checkForPermission()
-        title = "Notes"
+        title = "My Notes"
         if (preferences.getString("add_text", "")!!.isNotEmpty()) {
             val dialog = Dialog(this)
             dialog.setContentView(R.layout.note)
